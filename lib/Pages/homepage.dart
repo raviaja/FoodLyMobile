@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foodly_mobile_frontend/Pages/searchpage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,15 +9,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Foodly"),
-      ),
-      body: Center(
-        child: Text('Content'),
-      ),
-    );
+    return Center(child: Text("Home"));
   }
 }
