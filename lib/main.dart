@@ -65,8 +65,15 @@ class _MainPageState extends State<MainPage> {
       body: _pages[_selectedIndex],
 
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+
         currentIndex: _selectedIndex,
+
         onTap: _onItemTapped,
+        
+        selectedItemColor: Color(0xFFFF6900),
+
+        unselectedItemColor: Colors.black,
 
         items: const [
           BottomNavigationBarItem(
@@ -76,12 +83,17 @@ class _MainPageState extends State<MainPage> {
 
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
-            label: "Search",
+            label: "Cari",
           ),
 
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
+            icon: Icon(Icons.add),
+            label: "Buat",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: "Favorit",
           ),
         ],
       ),
