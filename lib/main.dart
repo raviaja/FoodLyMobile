@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:foodly_mobile_frontend/features/homescreen/presentation/homepage.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/pages/homepage.dart';
 import 'package:foodly_mobile_frontend/features/searchscreen/presentation/searchpage.dart';
 
 void main() {
