@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:foodly_mobile_frontend/Pages/homepage.dart';
-import 'package:foodly_mobile_frontend/Pages/searchpage.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/presentation/homepage.dart';
+import 'package:foodly_mobile_frontend/features/searchscreen/presentation/searchpage.dart';
 
 void main() {
   runApp(const MyApp());
