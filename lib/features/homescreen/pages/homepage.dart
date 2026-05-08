@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/widgets/recipe_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,7 +15,7 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: EdgeInsets.only(left: 20, right: 20),
         width: double.infinity,
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9)),
+        decoration: BoxDecoration(color: Color(0xFFFFF7ED)),
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,6 +76,10 @@ class _HomePageState extends State<HomePage> {
               "5 resep terbaik berdasarkan jumlah like dalam 7 hari terakhir",
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
+
+            SizedBox(height: 25),
+
+            RecipeCard()
           ],
         ),
       ),
