@@ -47,10 +47,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    SearchPage(),
-  ];
+  final List<Widget> _pages = const [HomePage(), SearchPage()];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -61,11 +58,36 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        leading: Padding(
+          padding: EdgeInsets.only(top: 12),
+          child: Image.asset("lib/assets/icons/logofoodly.png"),
+        ),
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [Color(0xFFF54900), Color(0xFFE7000B)],
+          ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+
+          child: const Text(
+            'Foodly',
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        actions: [IconButton(onPressed: () => {}, icon: Icon(Icons.logout))],
+        elevation: 4,
+        shadowColor: Colors.black12,
+        surfaceTintColor: Colors.transparent,
+        shape: const Border(bottom: BorderSide(color: Colors.grey, width: 1)),
+      ),
 
       body: _pages[_selectedIndex],
 
       bottomNavigationBar: BottomNavigationBar(
-
         backgroundColor: Colors.white,
 
         type: BottomNavigationBarType.fixed,
@@ -73,34 +95,21 @@ class _MainPageState extends State<MainPage> {
         currentIndex: _selectedIndex,
 
         onTap: _onItemTapped,
-        
+
         selectedItemColor: Color(0xFFFF6900),
 
         unselectedItemColor: Colors.black,
 
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
 
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Cari",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Cari"),
 
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add),
-            label: "Buat",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.add), label: "Buat"),
 
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: "Favorit",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorit"),
         ],
       ),
     );
   }
 }
-

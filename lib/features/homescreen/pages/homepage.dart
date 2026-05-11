@@ -13,7 +13,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        padding: EdgeInsets.only(left: 20, right: 20),
+        padding: EdgeInsets.only(top: 20, left: 20, right: 20),
         width: double.infinity,
         decoration: BoxDecoration(color: Color(0xFFFFF7ED)),
 
