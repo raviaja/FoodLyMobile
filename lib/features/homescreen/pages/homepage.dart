@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foodly_mobile_frontend/features/homescreen/widgets/recipe_card.dart';
+import '../services/recipe_service.dart';
+import '../model/recipe_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,6 +11,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final RecipeService recipeService = RecipeService();
+
+  List<Recipe> top5 = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    fetchRecipeTop5();
+  }
+
+  Future<void> fetchRecipeTop5() async {
+    final result = await recipeService.getTop5();
+
+    setState(() {
+      top5 = result;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -77,9 +98,27 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
 
-            SizedBox(height: 25),
+            SizedBox(height: 15),
 
-            RecipeCard()
+            Expanded(
+              child: ListView.separated(
+                itemCount: top5.length,
+                itemBuilder: (context, index) {
+                  final Recipe recipe = top5[index];
+
+                  return RecipeCard(
+                    name: recipe.title,
+                    user: recipe.user.name,
+                    like: recipe.likesCount,
+                    createdAt: recipe.createdAt,
+                    calories: recipe.calories,
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return const SizedBox(height: 15);
+                },
+              ),
+            ),
           ],
         ),
       ),

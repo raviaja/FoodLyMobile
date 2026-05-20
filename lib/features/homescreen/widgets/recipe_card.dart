@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 class RecipeCard extends StatelessWidget {
-  const RecipeCard({super.key});
+  
+  final String name;
+  final String user;
+  final int like;
+  final DateTime createdAt;
+  final int calories;
+
+  const RecipeCard({
+    super.key,
+    required this.name,
+    required this.user,
+    required this.like,
+    required this.createdAt,
+    required this.calories,
+  });
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +47,7 @@ class RecipeCard extends StatelessWidget {
           Padding(
             padding: EdgeInsetsGeometry.only(left: 20),
             child: Text(
-              "Nasi Goreng Tel-Aviv",
+              name,
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
             ),
           ),
@@ -40,7 +57,7 @@ class RecipeCard extends StatelessWidget {
           Padding(
             padding: EdgeInsetsGeometry.only(left: 20),
             child: Text(
-              "oleh Big_Yahu",
+              'oleh $user',
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
           ),
@@ -55,7 +72,7 @@ class RecipeCard extends StatelessWidget {
 
                 SizedBox(width: 5,),
 
-                Text("203", style: TextStyle(color: Color(0xFF4A5565))),
+                Text(like.toString(), style: TextStyle(color: Color(0xFF4A5565))),
 
                 SizedBox(width: 10,),
 
@@ -63,7 +80,7 @@ class RecipeCard extends StatelessWidget {
 
                 SizedBox(width: 5,),
 
-                Text("320 kal", style: TextStyle(color: Color(0xFF4A5565))),
+                Text("$calories kal", style: TextStyle(color: Color(0xFF4A5565))),
 
                 SizedBox(width: 10,),
 
@@ -71,7 +88,7 @@ class RecipeCard extends StatelessWidget {
 
                 SizedBox(width: 5,),
 
-                Text("19/04/2026", style: TextStyle(color: Color(0xFF4A5565))),
+                Text(DateFormat('dd/MM/yyyy').format(createdAt).toString(), style: TextStyle(color: Color(0xFF4A5565))),
               ],
             ),
           ),
