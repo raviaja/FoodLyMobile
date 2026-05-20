@@ -1,38 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 1. Import SharedPreferences
+
 import 'package:foodly_mobile_frontend/features/homescreen/pages/homepage.dart';
 import 'package:foodly_mobile_frontend/features/searchscreen/presentation/searchpage.dart';
+import 'package:foodly_mobile_frontend/screens/login_screen.dart'; // 2. Pastikan path ini sesuai dengan folder Anda
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  // 3. Wajib ditambahkan agar bisa pakai await sebelum runApp
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 4. Cek token di memori HP saat aplikasi pertama kali dibuka
+  final prefs = await SharedPreferences.getInstance();
+  final String? token = prefs.getString('token');
+
+  // 5. Lempar status login (true/false) ke MyApp
+  runApp(MyApp(isLoggedIn: token != null));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn; // Terima status login dari main()
 
-  // This widget is the root of your application.
+  const MyApp({super.key, required this.isLoggedIn});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Foodly',
+      debugShowCheckedModeBanner: false, // Menghilangkan pita "DEBUG"
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF6900)),
+        useMaterial3: true,
       ),
-      home: const MainPage(),
+      // 6. LOGIKA ROUTING UTAMA:
+      // Jika isLoggedIn true -> masuk ke MainPage (yang ada navbar)
+      // Jika isLoggedIn false -> masuk ke LoginScreen
+      home: isLoggedIn ? const MainPage() : const LoginScreen(),
     );
   }
 }
@@ -47,12 +49,33 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [HomePage(), SearchPage()];
+  // 7. Tambahkan halaman dummy untuk index 2 dan 3 agar tidak crash saat diklik
+  final List<Widget> _pages = const [
+    HomePage(),
+    SearchPage(),
+    Center(child: Text("Halaman Buat Resep belum dibuat")), // Index 2 (Buat)
+    Center(child: Text("Halaman Favorit belum dibuat")),    // Index 3 (Favorit)
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  // 8. FUNGSI LOGOUT
+  Future<void> _handleLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token'); // Hapus token dari memori
+
+    if (mounted) {
+      // Pindah paksa ke halaman Login dan hapus riwayat tombol "Back"
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -61,14 +84,13 @@ class _MainPageState extends State<MainPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: Padding(
-          padding: EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.only(top: 12),
           child: Image.asset("lib/assets/icons/logofoodly.png"),
         ),
         title: ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
             colors: [Color(0xFFF54900), Color(0xFFE7000B)],
           ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-
           child: const Text(
             'Foodly',
             style: TextStyle(
@@ -78,35 +100,32 @@ class _MainPageState extends State<MainPage> {
             ),
           ),
         ),
-        actions: [IconButton(onPressed: () => {}, icon: Icon(Icons.logout))],
+        actions: [
+          // 9. Pasang fungsi logout ke tombol
+          IconButton(
+            onPressed: _handleLogout, 
+            icon: const Icon(Icons.logout, color: Colors.black54),
+          )
+        ],
         elevation: 4,
         shadowColor: Colors.black12,
         surfaceTintColor: Colors.transparent,
         shape: const Border(bottom: BorderSide(color: Colors.grey, width: 1)),
       ),
-
+      
       body: _pages[_selectedIndex],
 
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
-
         type: BottomNavigationBarType.fixed,
-
         currentIndex: _selectedIndex,
-
         onTap: _onItemTapped,
-
-        selectedItemColor: Color(0xFFFF6900),
-
+        selectedItemColor: const Color(0xFFFF6900),
         unselectedItemColor: Colors.black,
-
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-
           BottomNavigationBarItem(icon: Icon(Icons.search), label: "Cari"),
-
           BottomNavigationBarItem(icon: Icon(Icons.add), label: "Buat"),
-
           BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorit"),
         ],
       ),
