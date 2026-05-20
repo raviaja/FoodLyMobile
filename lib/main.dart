@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // 1. Import SharedPreferences
 
 import 'package:foodly_mobile_frontend/features/homescreen/pages/homepage.dart';
-import 'package:foodly_mobile_frontend/features/searchscreen/presentation/searchpage.dart';
+import 'package:foodly_mobile_frontend/features/searchscreen/pages/searchpage.dart';
 import 'package:foodly_mobile_frontend/screens/login_screen.dart'; // 2. Pastikan path ini sesuai dengan folder Anda
 
 void main() async {
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
       // 6. LOGIKA ROUTING UTAMA:
       // Jika isLoggedIn true -> masuk ke MainPage (yang ada navbar)
       // Jika isLoggedIn false -> masuk ke LoginScreen
-      home: isLoggedIn ? const MainPage() : const LoginScreen(),
+      home: const MainPage(),
     );
   }
 }
