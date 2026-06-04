@@ -19,7 +19,7 @@ class _SearchPageState extends State<SearchPage> {
       TextEditingController();
 
   Future<void> searchForRecipe(String nama, String kategori, String urutan) async {
-    final result = await recipeService.searchRecipe(nama, kategori, urutan);
+    final result = await recipeService.searchRecipe(nama, kategori.toLowerCase(), urutan.toLowerCase());
 
     setState(() {
       searchResult = result;
