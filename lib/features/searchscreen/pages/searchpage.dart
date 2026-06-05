@@ -18,6 +18,21 @@ class _SearchPageState extends State<SearchPage> {
   final TextEditingController inputController =
       TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+
+    getTheLatestRecipes();
+  }
+
+  Future<void> getTheLatestRecipes() async {
+    final result = await recipeService.getLatestRecipes();
+
+    setState(() {
+      searchResult = result;
+    });
+  }
+
   Future<void> searchForRecipe(String nama, String kategori, String urutan) async {
     final result = await recipeService.searchRecipe(nama, kategori.toLowerCase(), urutan.toLowerCase());
 

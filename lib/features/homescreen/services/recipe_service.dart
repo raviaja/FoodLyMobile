@@ -19,6 +19,22 @@ class RecipeService {
     throw Exception('Failed to load recipes');
   }
 
+  Future<List<Recipe>> getLatestRecipes() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8000/api/recipes'),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> result = jsonDecode(response.body);
+
+      final List data = result['data'];
+
+      return data.map((json) => Recipe.fromJson(json)).toList();
+    }
+
+    throw Exception('Failed to load recipes');
+  }
+
   Future<List<Recipe>> searchRecipe(
     String name,
     String kategori,
