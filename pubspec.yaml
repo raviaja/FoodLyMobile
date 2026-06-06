@@ -34,6 +34,10 @@ dependencies:
   dio: ^5.4.0 # Pengganti Axios
   shared_preferences: ^2.2.2 # Pengganti localStorage
 
+  flutter_local_notifications: ^19.4.0
+  timezone: ^0.10.1
+  flutter_timezone: ^4.1.0
+
     
   http: ^1.2.1
   intl: ^0.20.2

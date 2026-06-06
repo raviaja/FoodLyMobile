@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // 1. Import SharedPreferences
+import './services/notif_service.dart';
 
 import 'package:foodly_mobile_frontend/features/homescreen/pages/homepage.dart';
 import 'package:foodly_mobile_frontend/features/searchscreen/pages/searchpage.dart';
 import 'package:foodly_mobile_frontend/screens/login_screen.dart'; // 2. Pastikan path ini sesuai dengan folder Anda
 
 void main() async {
-  // 3. Wajib ditambahkan agar bisa pakai await sebelum runApp
   WidgetsFlutterBinding.ensureInitialized();
+
+  await NotificationService.initialize();
+  await NotificationService.setupMealReminders();
+  final pending = await NotificationService.notifications
+      .pendingNotificationRequests();
+
+  print("Pending count: ${pending.length}");
+
+  for (final p in pending) {
+    print("${p.id} - ${p.title}");
+  }
 
   // 4. Cek token di memori HP saat aplikasi pertama kali dibuka
   final prefs = await SharedPreferences.getInstance();
@@ -54,7 +65,7 @@ class _MainPageState extends State<MainPage> {
     HomePage(),
     SearchPage(),
     Center(child: Text("Halaman Buat Resep belum dibuat")), // Index 2 (Buat)
-    Center(child: Text("Halaman Favorit belum dibuat")),    // Index 3 (Favorit)
+    Center(child: Text("Halaman Favorit belum dibuat")), // Index 3 (Favorit)
   ];
 
   void _onItemTapped(int index) {
@@ -103,16 +114,16 @@ class _MainPageState extends State<MainPage> {
         actions: [
           // 9. Pasang fungsi logout ke tombol
           IconButton(
-            onPressed: _handleLogout, 
+            onPressed: _handleLogout,
             icon: const Icon(Icons.logout, color: Colors.black54),
-          )
+          ),
         ],
         elevation: 4,
         shadowColor: Colors.black12,
         surfaceTintColor: Colors.transparent,
         shape: const Border(bottom: BorderSide(color: Colors.grey, width: 1)),
       ),
-      
+
       body: _pages[_selectedIndex],
 
       bottomNavigationBar: BottomNavigationBar(
