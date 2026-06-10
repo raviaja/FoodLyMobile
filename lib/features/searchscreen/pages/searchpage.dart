@@ -231,6 +231,7 @@ class _SearchPageState extends State<SearchPage> {
                   final Recipe recipe = searchResult[index];
 
                   return RecipeCard(
+                    id: recipe.id,
                     name: recipe.title,
                     user: recipe.user.name,
                     like: recipe.likesCount,

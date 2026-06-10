@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 class RecipeCard extends StatefulWidget {
   final String name;
+  final int id;
   final String user;
   final int like;
   final String imageUrl;
@@ -12,6 +13,7 @@ class RecipeCard extends StatefulWidget {
 
   const RecipeCard({
     super.key,
+    required this.id,
     required this.name,
     required this.user,
     required this.like,
