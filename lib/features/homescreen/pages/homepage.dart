@@ -110,6 +110,7 @@ class _HomePageState extends State<HomePage> {
                     name: recipe.title,
                     user: recipe.user.name,
                     like: recipe.likesCount,
+                    imageUrl: recipe.imageUrl,
                     createdAt: recipe.createdAt,
                     calories: recipe.calories,
                   );
