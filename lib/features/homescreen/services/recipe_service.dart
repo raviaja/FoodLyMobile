@@ -7,7 +7,7 @@ import '../model/recipe_model.dart';
 class RecipeService {
   Future<List<Recipe>> getTop5() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/recipes/top/best'),
+      Uri.parse('https://foodly-backend-5mci.onrender.com/api/recipes/top/best'),
     );
 
     if (response.statusCode == 200) {
@@ -21,7 +21,7 @@ class RecipeService {
 
   Future<List<Recipe>> getLatestRecipes() async {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/recipes'),
+      Uri.parse('https://foodly-backend-5mci.onrender.com/api/recipes/latest'),
     );
 
     if (response.statusCode == 200) {
@@ -42,7 +42,7 @@ class RecipeService {
   ) async {
     final response = await http.get(
       Uri.parse(
-        'http://10.0.2.2:8000/api/recipes?search=$name&kategori=$kategori&sort=$urutan',
+        'https://foodly-backend-5mci.onrender.com/api/recipes?search=$name&kategori=$kategori&sort=$urutan',
       ),
     );
 

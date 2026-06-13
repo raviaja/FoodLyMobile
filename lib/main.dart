@@ -6,6 +6,9 @@ import 'package:foodly_mobile_frontend/features/homescreen/pages/homepage.dart';
 import 'package:foodly_mobile_frontend/features/searchscreen/pages/searchpage.dart';
 import 'package:foodly_mobile_frontend/screens/login_screen.dart'; // 2. Pastikan path ini sesuai dengan folder Anda
 
+// IMPORT HALAMAN BUAT RESEP DI SINI:
+import 'package:foodly_mobile_frontend/features/recipescreen/pages/create_recipe_page.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -43,9 +46,8 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // 6. LOGIKA ROUTING UTAMA:
-      // Jika isLoggedIn true -> masuk ke MainPage (yang ada navbar)
-      // Jika isLoggedIn false -> masuk ke LoginScreen
-      home: const MainPage(),
+      // Pastikan menggunakan pengecekan isLoggedIn agar aman
+      home: isLoggedIn ? const MainPage() : const LoginScreen(),
     );
   }
 }
@@ -60,11 +62,11 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  // 7. Tambahkan halaman dummy untuk index 2 dan 3 agar tidak crash saat diklik
+  // 7. Masukkan CreateRecipePage ke dalam daftar halaman
   final List<Widget> _pages = const [
     HomePage(),
     SearchPage(),
-    Center(child: Text("Halaman Buat Resep belum dibuat")), // Index 2 (Buat)
+    CreateRecipePage(), // <--- HALAMAN BUAT RESEP SUDAH AKTIF
     Center(child: Text("Halaman Favorit belum dibuat")), // Index 3 (Favorit)
   ];
 
@@ -124,7 +126,10 @@ class _MainPageState extends State<MainPage> {
         shape: const Border(bottom: BorderSide(color: Colors.grey, width: 1)),
       ),
 
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
 
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
