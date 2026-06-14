@@ -10,7 +10,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   final RecipeService recipeService = RecipeService();
 
   List<Recipe> top5 = [];
@@ -19,6 +19,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
+    fetchRecipeTop5();
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
     fetchRecipeTop5();
   }
 
