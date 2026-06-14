@@ -34,7 +34,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> searchForRecipe(String nama, String kategori, String urutan) async {
-    final result = await recipeService.searchRecipe(nama, kategori.toLowerCase(), urutan.toLowerCase());
+    final result = await recipeService.searchRecipe(nama, kategori, urutan);
 
     setState(() {
       searchResult = result;

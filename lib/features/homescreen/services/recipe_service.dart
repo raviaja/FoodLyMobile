@@ -40,9 +40,22 @@ class RecipeService {
     String kategori,
     String urutan,
   ) async {
+    switch (kategori) {
+      case "Tanggal":
+        kategori = "created_at";
+        break;
+      case "Kalori":
+        kategori = "calories";
+        break;
+      default:
+        kategori = "likes_count";
+    }
+
+    urutan = (urutan == "Ascending") ? "asc" : "desc";
+
     final response = await http.get(
       Uri.parse(
-        'http://10.0.2.2:8000/api/recipes?search=$name&kategori=$kategori&sort=$urutan',
+        'http://10.0.2.2:8000/api/recipes?search=$name&sort_by=$kategori&sort_order=$urutan',
       ),
     );
 
