@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/model/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foodly_mobile_frontend/features/homescreen/widgets/recipe_card.dart';
 import 'package:foodly_mobile_frontend/features/homescreen/providers/like_provider.dart';
 import 'package:foodly_mobile_frontend/features/detailscreen/pages/recipe_detail_page.dart';
 import '../services/recipe_service.dart';
 import '../model/recipe_model.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   final LikeProvider likeProvider;
@@ -19,12 +22,14 @@ class _HomePageState extends State<HomePage> {
   List<Recipe> top5 = [];
   bool _isLoading = true;
   int _currentUserId = 0;
+  User user = User(id: -1, name: '', email: '', createdAt: DateTime.now(), updatedAt: DateTime.now());
 
   @override
   void initState() {
     super.initState();
     _loadUserId();
     fetchRecipeTop5();
+    getTheUser();
   }
 
   // didPopNext() DIHAPUS — tidak valid di State biasa,
@@ -34,6 +39,34 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() => _currentUserId = prefs.getInt('user_id') ?? 0);
+  }
+
+  Future<void> getTheUser() async {
+    final result = await getUser();
+    setState(() {
+      user = result;
+    });
+  }
+
+  Future<User> getUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('token');
+
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse('https://foodly-backend-5mci.onrender.com/api/me'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      return User.fromJson(json);
+    } else {
+      throw Exception('Failed to load user: ${response.body}');
+    }
   }
 
   Future<void> fetchRecipeTop5() async {
@@ -76,16 +109,19 @@ class _HomePageState extends State<HomePage> {
                 Image.asset('lib/assets/icons/IconStar.png'),
                 Expanded(
                   child: ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFFF54900), Color(0xFFE7000B)],
-                    ).createShader(
-                        Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-                    child: const Text(
-                      'Happy Cooking, faisal!',
+                    shaderCallback: (bounds) =>
+                        const LinearGradient(
+                          colors: [Color(0xFFF54900), Color(0xFFE7000B)],
+                        ).createShader(
+                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                        ),
+                    child: Text(
+                      'Happy Cooking, ${user.name}!',
                       style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -106,9 +142,10 @@ class _HomePageState extends State<HomePage> {
                 const Text(
                   'Recipe of the Week',
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ],
             ),
@@ -124,7 +161,9 @@ class _HomePageState extends State<HomePage> {
               child: _isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
-                          color: Color(0xFFFF6900)))
+                        color: Color(0xFFFF6900),
+                      ),
+                    )
                   : AnimatedBuilder(
                       animation: widget.likeProvider,
                       builder: (context, _) {
