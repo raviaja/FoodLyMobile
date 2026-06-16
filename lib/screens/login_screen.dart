@@ -16,15 +16,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   String? _errorMessage;
 
   Future<void> _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    setState(() { _isLoading = true; _errorMessage = null; });
 
     try {
       final response = await ApiClient.dio.post('/login', data: {
@@ -32,22 +29,26 @@ class _LoginScreenState extends State<LoginScreen> {
         'password': _passwordController.text,
       });
 
-      final token = response.data['token'] ?? response.data['data']['token'];
-      
-      // Simpan token (Pengganti localStorage)
+      // Response BE: { message, token, user: { id, name, email, ... } }
+      final String token = response.data['token'];
+      final int userId = response.data['user']['id'];
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
+      await prefs.setInt('user_id', userId); // ← simpan user_id untuk cek kepemilikan resep
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Login Berhasil!"), backgroundColor: Colors.green),
         );
-        // AKTIFKAN BARIS INI: Navigasi ke Home setelah login sukses
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainPage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+        );
       }
     } on DioException catch (e) {
       setState(() {
-        if (e.response?.statusCode == 401) {
+        if (e.response?.statusCode == 401 || e.response?.statusCode == 422) {
           _errorMessage = "Email atau Password salah!";
         } else {
           _errorMessage = e.response?.data['message'] ?? "Gagal terhubung ke server.";
@@ -98,12 +99,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(color: Colors.red[100], borderRadius: BorderRadius.circular(10)),
-                    child: Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                    decoration: BoxDecoration(
+                      color: Colors.red[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
 
-                CustomInput(hintText: "Email", icon: Icons.email_outlined, controller: _emailController),
-                CustomInput(hintText: "Password", icon: Icons.lock_outline, isPassword: true, controller: _passwordController),
+                CustomInput(
+                  hintText: "Email",
+                  icon: Icons.email_outlined,
+                  controller: _emailController,
+                ),
+                CustomInput(
+                  hintText: "Password",
+                  icon: Icons.lock_outline,
+                  isPassword: true,
+                  controller: _passwordController,
+                ),
 
                 const SizedBox(height: 8),
                 SizedBox(
@@ -115,9 +132,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
                     onPressed: _isLoading ? null : _handleLogin,
-                    child: _isLoading 
+                    child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("Login", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        : const Text(
+                            "Login",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -126,11 +150,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text("Belum punya akun? ", style: TextStyle(color: Colors.grey)),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                      child: const Text("Daftar", style: TextStyle(color: Color(0xFFFF6900), fontWeight: FontWeight.bold)),
+                      onTap: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                      ),
+                      child: const Text(
+                        "Daftar",
+                        style: TextStyle(
+                          color: Color(0xFFFF6900),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),

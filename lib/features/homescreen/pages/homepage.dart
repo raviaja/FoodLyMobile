@@ -1,49 +1,72 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foodly_mobile_frontend/features/homescreen/widgets/recipe_card.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/providers/like_provider.dart';
+import 'package:foodly_mobile_frontend/features/detailscreen/pages/recipe_detail_page.dart';
 import '../services/recipe_service.dart';
 import '../model/recipe_model.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final LikeProvider likeProvider;
+  const HomePage({super.key, required this.likeProvider});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with RouteAware {
+class _HomePageState extends State<HomePage> {
   final RecipeService recipeService = RecipeService();
-
   List<Recipe> top5 = [];
+  bool _isLoading = true;
+  int _currentUserId = 0;
 
   @override
   void initState() {
     super.initState();
-
+    _loadUserId();
     fetchRecipeTop5();
   }
 
-  @override
-  void didPopNext() {
-    super.didPopNext();
-    fetchRecipeTop5();
+  // didPopNext() DIHAPUS — tidak valid di State biasa,
+  // dan tidak dibutuhkan karena IndexedStack tidak push/pop route.
+  // Refresh otomatis sudah ditangani oleh LikeProvider (AnimatedBuilder).
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _currentUserId = prefs.getInt('user_id') ?? 0);
   }
 
   Future<void> fetchRecipeTop5() async {
-    final result = await recipeService.getTop5();
+    setState(() => _isLoading = true);
+    try {
+      final result = await recipeService.getTop5();
+      widget.likeProvider.initFromRecipes(result);
+      setState(() => top5 = result);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
-    setState(() {
-      top5 = result;
-    });
+  void _goToDetail(BuildContext context, int recipeId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RecipeDetailPage(
+          recipeId: recipeId,
+          currentUserId: _currentUserId,
+          likeProvider: widget.likeProvider,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        padding: EdgeInsets.only(top: 20, left: 20, right: 20),
+        padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
         width: double.infinity,
-        decoration: BoxDecoration(color: Color(0xFFFFF7ED)),
-
+        decoration: const BoxDecoration(color: Color(0xFFFFF7ED)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -53,79 +76,80 @@ class _HomePageState extends State<HomePage> with RouteAware {
                 Image.asset('lib/assets/icons/IconStar.png'),
                 Expanded(
                   child: ShaderMask(
-                    shaderCallback: (bounds) =>
-                        const LinearGradient(
-                          colors: [Color(0xFFF54900), Color(0xFFE7000B)],
-                        ).createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                        ),
-
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Color(0xFFF54900), Color(0xFFE7000B)],
+                    ).createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
                     child: const Text(
                       'Happy Cooking, faisal!',
                       style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ),
                 ),
               ],
             ),
 
-            SizedBox(height: 10),
-
-            Text(
-              "Temukan resep favorit dan mulai memasak hari ini",
+            const SizedBox(height: 10),
+            const Text(
+              'Temukan resep favorit dan mulai memasak hari ini',
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
-
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             Row(
               spacing: 10,
               children: [
                 Image.asset('lib/assets/icons/IconRising.png'),
-                Text(
+                const Text(
                   'Recipe of the Week',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                 ),
               ],
             ),
 
-            SizedBox(height: 15),
-
-            Text(
-              "5 resep terbaik berdasarkan jumlah like dalam 7 hari terakhir",
+            const SizedBox(height: 15),
+            const Text(
+              '5 resep terbaik berdasarkan jumlah like dalam 7 hari terakhir',
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
-
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
 
             Expanded(
-              child: ListView.separated(
-                itemCount: top5.length,
-                itemBuilder: (context, index) {
-                  final Recipe recipe = top5[index];
-
-                  return RecipeCard(
-                    id: recipe.id,
-                    name: recipe.title,
-                    user: recipe.user.name,
-                    like: recipe.likesCount,
-                    imageUrl: recipe.imageUrl,
-                    createdAt: recipe.createdAt,
-                    calories: recipe.calories,
-                  );
-                },
-                separatorBuilder: (context, index) {
-                  return const SizedBox(height: 15);
-                },
-              ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: Color(0xFFFF6900)))
+                  : AnimatedBuilder(
+                      animation: widget.likeProvider,
+                      builder: (context, _) {
+                        return ListView.separated(
+                          itemCount: top5.length,
+                          itemBuilder: (context, index) {
+                            final recipe = top5[index];
+                            return RecipeCard(
+                              id: recipe.id,
+                              name: recipe.title,
+                              user: recipe.user.name,
+                              like: recipe.likesCount,
+                              imageUrl: recipe.imageUrl,
+                              createdAt: recipe.createdAt,
+                              calories: recipe.calories,
+                              isLiked: recipe.isLiked,
+                              likeProvider: widget.likeProvider,
+                              onTap: () => _goToDetail(context, recipe.id),
+                            );
+                          },
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 15),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
