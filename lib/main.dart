@@ -1,52 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 1. Import SharedPreferences
+import 'package:shared_preferences/shared_preferences.dart';
 import './services/notif_service.dart';
 
 import 'package:foodly_mobile_frontend/features/homescreen/pages/homepage.dart';
 import 'package:foodly_mobile_frontend/features/searchscreen/pages/searchpage.dart';
-import 'package:foodly_mobile_frontend/screens/login_screen.dart'; // 2. Pastikan path ini sesuai dengan folder Anda
-
-// IMPORT HALAMAN BUAT RESEP DI SINI:
+import 'package:foodly_mobile_frontend/screens/login_screen.dart';
 import 'package:foodly_mobile_frontend/features/recipescreen/pages/create_recipe_page.dart';
+import 'package:foodly_mobile_frontend/features/favoritscreen/pages/favorit_page.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/providers/like_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await NotificationService.initialize();
   await NotificationService.setupMealReminders();
-  final pending = await NotificationService.notifications
-      .pendingNotificationRequests();
+  final pending = await NotificationService.notifications.pendingNotificationRequests();
 
   print("Pending count: ${pending.length}");
-
   for (final p in pending) {
     print("${p.id} - ${p.title}");
   }
 
-  // 4. Cek token di memori HP saat aplikasi pertama kali dibuka
   final prefs = await SharedPreferences.getInstance();
   final String? token = prefs.getString('token');
 
-  // 5. Lempar status login (true/false) ke MyApp
   runApp(MyApp(isLoggedIn: token != null));
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn; // Terima status login dari main()
-
+  final bool isLoggedIn;
   const MyApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Foodly',
-      debugShowCheckedModeBanner: false, // Menghilangkan pita "DEBUG"
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF6900)),
         useMaterial3: true,
       ),
-      // 6. LOGIKA ROUTING UTAMA:
-      // Pastikan menggunakan pengecekan isLoggedIn agar aman
       home: isLoggedIn ? const MainPage() : const LoginScreen(),
     );
   }
@@ -62,27 +55,46 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
 
-  // 7. Masukkan CreateRecipePage ke dalam daftar halaman
-  final List<Widget> _pages = const [
-    HomePage(),
-    SearchPage(),
-    CreateRecipePage(), // <--- HALAMAN BUAT RESEP SUDAH AKTIF
-    Center(child: Text("Halaman Favorit belum dibuat")), // Index 3 (Favorit)
-  ];
+  final LikeProvider _likeProvider = LikeProvider();
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  // ← GlobalKey untuk mengakses FavoritPageState dari luar
+  final GlobalKey<FavoritPageState> _favoritPageKey = GlobalKey<FavoritPageState>();
+
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomePage(likeProvider: _likeProvider),
+      SearchPage(likeProvider: _likeProvider),
+      const CreateRecipePage(),
+      FavoritPage(
+        key: _favoritPageKey, // ← pasang key di sini
+        likeProvider: _likeProvider,
+      ),
+    ];
   }
 
-  // 8. FUNGSI LOGOUT
+  @override
+  void dispose() {
+    _likeProvider.dispose();
+    super.dispose();
+  }
+
+  void _onItemTapped(int index) {
+    // ← Setiap kali tab Favorit (index 3) dipencet, langsung refresh
+    if (index == 3) {
+      _favoritPageKey.currentState?.refresh();
+    }
+    setState(() => _selectedIndex = index);
+  }
+
   Future<void> _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token'); // Hapus token dari memori
+    await prefs.remove('token');
 
     if (mounted) {
-      // Pindah paksa ke halaman Login dan hapus riwayat tombol "Back"
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -106,15 +118,10 @@ class _MainPageState extends State<MainPage> {
           ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
           child: const Text(
             'Foodly',
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
         actions: [
-          // 9. Pasang fungsi logout ke tombol
           IconButton(
             onPressed: _handleLogout,
             icon: const Icon(Icons.logout, color: Colors.black54),
@@ -125,12 +132,10 @@ class _MainPageState extends State<MainPage> {
         surfaceTintColor: Colors.transparent,
         shape: const Border(bottom: BorderSide(color: Colors.grey, width: 1)),
       ),
-
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         type: BottomNavigationBarType.fixed,

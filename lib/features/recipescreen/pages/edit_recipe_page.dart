@@ -1,28 +1,58 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:foodly_mobile_frontend/services/api_client.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/model/recipe_model.dart';
+import 'package:foodly_mobile_frontend/features/homescreen/services/recipe_service.dart';
 import 'package:foodly_mobile_frontend/widgets/image_picker_widget.dart';
 
-class CreateRecipePage extends StatefulWidget {
-  const CreateRecipePage({super.key});
+class EditRecipePage extends StatefulWidget {
+  final Recipe recipe;
+  const EditRecipePage({super.key, required this.recipe});
 
   @override
-  State<CreateRecipePage> createState() => _CreateRecipePageState();
+  State<EditRecipePage> createState() => _EditRecipePageState();
 }
 
-class _CreateRecipePageState extends State<CreateRecipePage> {
+class _EditRecipePageState extends State<EditRecipePage> {
   final _formKey = GlobalKey<FormState>();
+  final RecipeService _recipeService = RecipeService();
 
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _caloriesController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _caloriesController;
+  late final TextEditingController _descriptionController;
+  late List<TextEditingController> _ingredientControllers;
+  late List<TextEditingController> _stepControllers;
 
-  List<TextEditingController> _ingredientControllers = [TextEditingController()];
-  List<TextEditingController> _stepControllers = [TextEditingController()];
-
-  String _imageUrl = ''; // diisi oleh ImagePickerWidget
+  late String _imageUrl; // diupdate oleh ImagePickerWidget
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.recipe.title);
+    _caloriesController =
+        TextEditingController(text: widget.recipe.calories.toString());
+    _descriptionController =
+        TextEditingController(text: widget.recipe.description);
+    _imageUrl = widget.recipe.imageUrl;
+    _ingredientControllers = _parseJsonToControllers(widget.recipe.ingredients);
+    _stepControllers = _parseJsonToControllers(widget.recipe.steps);
+  }
+
+  List<TextEditingController> _parseJsonToControllers(String raw) {
+    try {
+      final List list = jsonDecode(raw);
+      if (list.isEmpty) return [TextEditingController()];
+      return list
+          .map((e) => TextEditingController(text: e.toString()))
+          .toList();
+    } catch (_) {
+      // Fallback: split per koma (format web)
+      final parts = raw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      if (parts.isEmpty) return [TextEditingController()];
+      return parts.map((e) => TextEditingController(text: e)).toList();
+    }
+  }
 
   @override
   void dispose() {
@@ -56,13 +86,13 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
     });
   }
 
-  Future<void> _submitRecipe() async {
+  Future<void> _submitEdit() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_imageUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Foto resep wajib ditambahkan.'),
+          content: Text('Foto resep tidak boleh kosong.'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -72,56 +102,39 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await ApiClient.dio.post(
-        '/recipes',
-        data: {
-          'title': _titleController.text.trim(),
-          'description': _descriptionController.text.trim(),
-          'image_url': _imageUrl,
-          'calories': int.parse(_caloriesController.text.trim()),
-          'ingredients': jsonEncode(
-              _ingredientControllers.map((c) => c.text.trim()).toList()),
-          'steps':
-              jsonEncode(_stepControllers.map((c) => c.text.trim()).toList()),
-        },
-      );
+      await _recipeService.updateRecipe(widget.recipe.id, {
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'image_url': _imageUrl,
+        'calories': int.parse(_caloriesController.text.trim()),
+        'ingredients': jsonEncode(
+            _ingredientControllers.map((c) => c.text.trim()).toList()),
+        'steps':
+            jsonEncode(_stepControllers.map((c) => c.text.trim()).toList()),
+      });
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Resep berhasil dibuat!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _resetForm();
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Resep berhasil diupdate!'),
+              backgroundColor: Colors.green),
+        );
+        Navigator.pop(context, true);
       }
     } on DioException catch (e) {
-      String errorMessage = 'Gagal membuat resep.';
+      String msg = 'Gagal mengupdate resep.';
       if (e.response?.data is Map &&
           e.response!.data.containsKey('message')) {
-        errorMessage = e.response!.data['message'];
+        msg = e.response!.data['message'];
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _resetForm() {
-    _titleController.clear();
-    _caloriesController.clear();
-    _descriptionController.clear();
-    setState(() {
-      _imageUrl = '';
-      _ingredientControllers = [TextEditingController()];
-      _stepControllers = [TextEditingController()];
-    });
   }
 
   @override
@@ -131,7 +144,13 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Edit Resep',
+            style:
+                TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -140,15 +159,10 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Buat Resep Baru',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 25),
-
-              // ── Foto Resep (kamera/galeri) ──
+              // ── Foto Resep ──
               _buildLabel('Foto Resep *'),
               ImagePickerWidget(
+                initialImageUrl: _imageUrl, // tampilkan foto lama
                 onImageUrlChanged: (url) => setState(() => _imageUrl = url),
               ),
 
@@ -158,7 +172,8 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
 
               // ── Kalori ──
               _buildLabel('Jumlah Kalori *'),
-              _buildTextField(_caloriesController, 'Contoh: 450', isNumber: true),
+              _buildTextField(_caloriesController, 'Contoh: 450',
+                  isNumber: true),
 
               // ── Deskripsi ──
               _buildLabel('Deskripsi *'),
@@ -183,8 +198,8 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                       ),
                       if (_ingredientControllers.length > 1)
                         IconButton(
-                          icon:
-                              const Icon(Icons.remove_circle, color: Colors.red),
+                          icon: const Icon(Icons.remove_circle,
+                              color: Colors.red),
                           onPressed: () => _removeIngredient(entry.key),
                         ),
                     ],
@@ -209,10 +224,8 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                           color: const Color(0xFFFF6900),
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        child: Text(
-                          '${entry.key + 1}',
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                        child: Text('${entry.key + 1}',
+                            style: const TextStyle(color: Colors.white)),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -221,8 +234,8 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                       ),
                       if (_stepControllers.length > 1)
                         IconButton(
-                          icon:
-                              const Icon(Icons.remove_circle, color: Colors.red),
+                          icon: const Icon(Icons.remove_circle,
+                              color: Colors.red),
                           onPressed: () => _removeStep(entry.key),
                         ),
                     ],
@@ -238,7 +251,7 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _resetForm,
+                      onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
@@ -251,7 +264,7 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitRecipe,
+                      onPressed: _isLoading ? null : _submitEdit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF6900),
                         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -260,7 +273,7 @@ class _CreateRecipePageState extends State<CreateRecipePage> {
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Buat Resep',
+                          : const Text('Simpan Perubahan',
                               style: TextStyle(color: Colors.white)),
                     ),
                   ),
