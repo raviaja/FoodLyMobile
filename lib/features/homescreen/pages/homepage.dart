@@ -23,17 +23,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadUserId();   // dari HEAD (kamu)
+    _loadUserId();
     fetchRecipeTop5();
   }
 
-  // Dari teman: refresh top5 setiap kali user balik ke halaman ini
-  // (misal setelah buat resep baru atau hapus resep)
-  @override
-  void didPopNext() {
-    super.didPopNext();
-    fetchRecipeTop5();
-  }
+  // didPopNext() DIHAPUS — tidak valid di State biasa,
+  // dan tidak dibutuhkan karena IndexedStack tidak push/pop route.
+  // Refresh otomatis sudah ditangani oleh LikeProvider (AnimatedBuilder).
 
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
