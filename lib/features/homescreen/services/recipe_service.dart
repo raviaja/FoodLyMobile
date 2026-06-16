@@ -29,13 +29,33 @@ class RecipeService {
     throw Exception('Failed to load recipes');
   }
 
+  // Gabungan: logic mapping dari teman + URL endpoint dari kamu
   Future<List<Recipe>> searchRecipe(
       String name, String kategori, String urutan) async {
+
+    // Map label UI → nama kolom di BE (dari teman)
+    String sortBy;
+    switch (kategori) {
+      case 'Tanggal':
+        sortBy = 'created_at';
+        break;
+      case 'Kalori':
+        sortBy = 'calories';
+        break;
+      default: // 'Like'
+        sortBy = 'likes_count';
+        break;
+    }
+
+    // Map label UI → asc/desc (dari teman)
+    final sortOrder = (urutan == 'Ascending') ? 'asc' : 'desc';
+
     final response = await http.get(
       Uri.parse(
-        'https://foodly-backend-5mci.onrender.com/api/recipes?search=$name&kategori=$kategori&sort=$urutan',
+        'https://foodly-backend-5mci.onrender.com/api/recipes?search=$name&sort_by=$sortBy&sort_order=$sortOrder',
       ),
     );
+
     if (response.statusCode == 200) {
       final Map<String, dynamic> result = jsonDecode(response.body);
       final List data = result['data'];
@@ -46,18 +66,15 @@ class RecipeService {
 
   // ── Dengan token (pakai Dio via ApiClient) ──
 
-  // GET /recipes/{id} — detail resep + is_liked dari server
   Future<Recipe> getDetail(int id) async {
     final response = await ApiClient.dio.get('recipes/$id');
     return Recipe.fromJson(response.data);
   }
 
-  // PUT /recipes/{id} — update resep milik sendiri
   Future<void> updateRecipe(int id, Map<String, dynamic> data) async {
     await ApiClient.dio.put('recipes/$id', data: data);
   }
 
-  // DELETE /recipes/{id} — hapus resep milik sendiri
   Future<void> deleteRecipe(int id) async {
     await ApiClient.dio.delete('recipes/$id');
   }

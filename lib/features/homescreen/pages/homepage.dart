@@ -18,21 +18,26 @@ class _HomePageState extends State<HomePage> {
   final RecipeService recipeService = RecipeService();
   List<Recipe> top5 = [];
   bool _isLoading = true;
-  int _currentUserId = 0; // ID user yang sedang login
+  int _currentUserId = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId();
+    _loadUserId();   // dari HEAD (kamu)
     fetchRecipeTop5();
   }
 
-  // Ambil user ID dari SharedPreferences (disimpan saat login)
+  // Dari teman: refresh top5 setiap kali user balik ke halaman ini
+  // (misal setelah buat resep baru atau hapus resep)
+  @override
+  void didPopNext() {
+    super.didPopNext();
+    fetchRecipeTop5();
+  }
+
   Future<void> _loadUserId() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _currentUserId = prefs.getInt('user_id') ?? 0;
-    });
+    setState(() => _currentUserId = prefs.getInt('user_id') ?? 0);
   }
 
   Future<void> fetchRecipeTop5() async {
@@ -77,10 +82,14 @@ class _HomePageState extends State<HomePage> {
                   child: ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
                       colors: [Color(0xFFF54900), Color(0xFFE7000B)],
-                    ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+                    ).createShader(
+                        Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
                     child: const Text(
                       'Happy Cooking, faisal!',
-                      style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ),
                 ),
@@ -89,7 +98,7 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
             const Text(
-              "Temukan resep favorit dan mulai memasak hari ini",
+              'Temukan resep favorit dan mulai memasak hari ini',
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
             const SizedBox(height: 20),
@@ -100,21 +109,26 @@ class _HomePageState extends State<HomePage> {
                 Image.asset('lib/assets/icons/IconRising.png'),
                 const Text(
                   'Recipe of the Week',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                 ),
               ],
             ),
 
             const SizedBox(height: 15),
             const Text(
-              "5 resep terbaik berdasarkan jumlah like dalam 7 hari terakhir",
+              '5 resep terbaik berdasarkan jumlah like dalam 7 hari terakhir',
               style: TextStyle(color: Color(0xFF4A5565)),
             ),
             const SizedBox(height: 15),
 
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF6900)))
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: Color(0xFFFF6900)))
                   : AnimatedBuilder(
                       animation: widget.likeProvider,
                       builder: (context, _) {
@@ -132,10 +146,11 @@ class _HomePageState extends State<HomePage> {
                               calories: recipe.calories,
                               isLiked: recipe.isLiked,
                               likeProvider: widget.likeProvider,
-                              onTap: () => _goToDetail(context, recipe.id), // ← navigasi ke detail
+                              onTap: () => _goToDetail(context, recipe.id),
                             );
                           },
-                          separatorBuilder: (_, __) => const SizedBox(height: 15),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 15),
                         );
                       },
                     ),

@@ -18,8 +18,10 @@ class _SearchPageState extends State<SearchPage> {
   final RecipeService recipeService = RecipeService();
   List<Recipe> searchResult = [];
   final TextEditingController inputController = TextEditingController();
-  String kategori = "Like";
-  String urutan = "Descending";
+
+  // Pakai label UI (bukan lowercase) — mapping dilakukan di RecipeService
+  String kategori = 'Like';
+  String urutan = 'Descending';
   int _currentUserId = 0;
 
   @override
@@ -40,9 +42,11 @@ class _SearchPageState extends State<SearchPage> {
     setState(() => searchResult = result);
   }
 
-  Future<void> searchForRecipe(String nama, String kategori, String urutan) async {
-    final result = await recipeService.searchRecipe(
-        nama, kategori.toLowerCase(), urutan.toLowerCase());
+  // Pakai label asli (bukan toLowerCase) — RecipeService yang handle mapping
+  Future<void> searchForRecipe(
+      String nama, String kategori, String urutan) async {
+    final result =
+        await recipeService.searchRecipe(nama, kategori, urutan);
     widget.likeProvider.initFromRecipes(result);
     setState(() => searchResult = result);
   }
@@ -76,7 +80,10 @@ class _SearchPageState extends State<SearchPage> {
               ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
               child: const Text(
                 'Cari Resep',
-                style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
             ),
 
@@ -87,7 +94,12 @@ class _SearchPageState extends State<SearchPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 8))],
+                boxShadow: const [
+                  BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 20,
+                      offset: Offset(0, 8))
+                ],
               ),
               child: Column(
                 children: [
@@ -97,16 +109,19 @@ class _SearchPageState extends State<SearchPage> {
                         child: TextField(
                           controller: inputController,
                           decoration: InputDecoration(
-                            labelText: "Masukkan nama resep",
+                            labelText: 'Masukkan nama resep',
                             filled: true,
                             fillColor: const Color(0xFFF3F3F5),
-                            labelStyle: const TextStyle(color: Color(0xFF717182)),
+                            labelStyle:
+                                const TextStyle(color: Color(0xFF717182)),
                             enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFFFFD6A8), width: 1),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFFFFD6A8), width: 1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Color(0xFFFFD6A8), width: 1),
+                              borderSide: const BorderSide(
+                                  color: Color(0xFFFFD6A8), width: 1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
@@ -117,14 +132,16 @@ class _SearchPageState extends State<SearchPage> {
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(0, 45),
                           backgroundColor: const Color(0xFFFF6900),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        onPressed: () => searchForRecipe(inputController.text, kategori, urutan),
+                        onPressed: () =>
+                            searchForRecipe(inputController.text, kategori, urutan),
                         child: const Row(
                           children: [
                             Icon(Icons.search, color: Colors.white),
                             SizedBox(width: 10),
-                            Text("Cari", style: TextStyle(color: Colors.white)),
+                            Text('Cari', style: TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -135,20 +152,37 @@ class _SearchPageState extends State<SearchPage> {
                     children: [
                       const Icon(Icons.tune, color: Color(0xFFF54900)),
                       const SizedBox(width: 10),
-                      const Text("Filter:", style: TextStyle(color: Color(0xFF364153), fontWeight: FontWeight.w500)),
+                      const Text('Filter:',
+                          style: TextStyle(
+                              color: Color(0xFF364153),
+                              fontWeight: FontWeight.w500)),
                       const SizedBox(width: 15),
                       DropdownButton<String>(
                         value: kategori,
-                        items: ["Like", "Tanggal", "Kalori"].map((item) =>
-                          DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(color: Color(0xFF0A0A0A))))).toList(),
-                        onChanged: (value) => setState(() => kategori = value!),
+                        items: ['Like', 'Tanggal', 'Kalori']
+                            .map((item) => DropdownMenuItem(
+                                  value: item,
+                                  child: Text(item,
+                                      style: const TextStyle(
+                                          color: Color(0xFF0A0A0A))),
+                                ))
+                            .toList(),
+                        onChanged: (value) =>
+                            setState(() => kategori = value!),
                       ),
                       const SizedBox(width: 15),
                       DropdownButton<String>(
                         value: urutan,
-                        items: ["Descending", "Ascending"].map((item) =>
-                          DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(color: Color(0xFF0A0A0A))))).toList(),
-                        onChanged: (value) => setState(() => urutan = value!),
+                        items: ['Descending', 'Ascending']
+                            .map((item) => DropdownMenuItem(
+                                  value: item,
+                                  child: Text(item,
+                                      style: const TextStyle(
+                                          color: Color(0xFF0A0A0A))),
+                                ))
+                            .toList(),
+                        onChanged: (value) =>
+                            setState(() => urutan = value!),
                       ),
                     ],
                   ),
@@ -176,7 +210,7 @@ class _SearchPageState extends State<SearchPage> {
                         calories: recipe.calories,
                         isLiked: recipe.isLiked,
                         likeProvider: widget.likeProvider,
-                        onTap: () => _goToDetail(context, recipe.id), // ← navigasi ke detail
+                        onTap: () => _goToDetail(context, recipe.id),
                       );
                     },
                     separatorBuilder: (_, __) => const SizedBox(height: 15),
